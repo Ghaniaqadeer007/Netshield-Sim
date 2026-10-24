@@ -1,0 +1,394 @@
+/* ==========================================================================
+   NetShield Sim - Canvas & Topology SVG Styles
+   Theme: "Midnight Teal on White" (DESIGN.md §6.3, §6.4, §6.5)
+   ========================================================================== */
+
+/* SVG Canvas Root */
+.canvas-svg {
+  width: 100%;
+  height: 100%;
+  outline: none;
+  background-color: var(--bg-canvas);
+}
+
+/* Background Grid Pattern */
+.grid-pattern-line {
+  stroke: var(--grid-line);
+  stroke-width: 1;
+}
+
+.grid-pattern-dot {
+  fill: var(--grid-line);
+}
+
+/* ==========================================================================
+   Links / Cables
+   ========================================================================== */
+
+.links-layer {
+  pointer-events: auto;
+}
+
+.link-group {
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.link-hitarea {
+  stroke: transparent;
+  stroke-width: 22;
+  fill: none;
+  cursor: pointer;
+}
+
+.link-glow {
+  stroke: rgba(20, 184, 166, 0.22);
+  stroke-width: 14;
+  stroke-linecap: round;
+  fill: none;
+  display: none;
+}
+
+.link-line {
+  stroke: var(--cable);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  fill: none;
+  transition: stroke var(--transition-fast), stroke-width var(--transition-fast);
+}
+
+.link-group:hover .link-line {
+  stroke: var(--accent-hover);
+  stroke-width: 4;
+}
+
+.link-group.selected .link-line {
+  stroke: var(--accent);
+  stroke-width: 4.5;
+}
+
+/* Link Status: Down / Cut */
+.link-group.link-down .link-line {
+  stroke: var(--danger) !important;
+  stroke-dasharray: 6 5;
+  opacity: 0.9;
+}
+
+.link-cut-marker {
+  fill: var(--danger);
+  font-family: var(--font-sans);
+  font-weight: 800;
+  font-size: 16px;
+  text-anchor: middle;
+  dominant-baseline: central;
+  user-select: none;
+}
+
+/* Link Active Route Flow */
+.link-group.active-route .link-glow {
+  display: block;
+}
+
+.link-group.active-route .link-line {
+  stroke: var(--path-highlight) !important;
+  stroke-width: 4.5;
+  stroke-dasharray: 8 6;
+  animation: flowDash 1s linear infinite;
+}
+
+/* Old route comparison */
+.link-group.old-route .link-line {
+  stroke: var(--text-muted) !important;
+  stroke-width: 3;
+  stroke-dasharray: 5 5;
+  opacity: 0.5;
+}
+
+@keyframes flowDash {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+
+/* Link Cost Badge (White pill, subtle border, midnight text) */
+.link-cost-bg {
+  fill: #FFFFFF;
+  stroke: var(--border);
+  stroke-width: 1.5;
+  rx: 14;
+  ry: 14;
+  filter: drop-shadow(0 2px 4px rgba(8, 18, 26, 0.08));
+}
+
+.link-group:hover .link-cost-bg {
+  border-color: var(--accent-bright);
+}
+
+.link-group.selected .link-cost-bg {
+  stroke: var(--accent);
+}
+
+.link-cost-text {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  fill: var(--midnight);
+  text-anchor: middle;
+  dominant-baseline: central;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Temporary Link Creation Line */
+.temp-link-line {
+  stroke: var(--accent-bright);
+  stroke-width: 3;
+  stroke-dasharray: 5 4;
+  fill: none;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Nodes (88px Rounded Square Tile with Soft Shadow & Border)
+   ========================================================================== */
+
+.nodes-layer {
+  pointer-events: auto;
+}
+
+.node-group {
+  cursor: grab;
+  transition: opacity var(--transition-fast);
+}
+
+.node-group:active {
+  cursor: grabbing;
+}
+
+/* Soft shadow rect underneath tile */
+.node-shadow-rect {
+  fill: rgba(8, 18, 26, 0.10);
+  pointer-events: none;
+}
+
+/* Selection halo */
+.node-halo {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 2.5;
+  transition: all var(--transition-fast);
+}
+
+.node-group:hover .node-halo {
+  stroke: var(--border);
+}
+
+.node-group.selected .node-halo {
+  stroke: var(--accent-bright);
+  filter: drop-shadow(0 0 8px rgba(20, 184, 166, 0.40));
+}
+
+/* White Tile Body with 3.5px Accent Border */
+.node-tile {
+  fill: #FFFFFF;
+  stroke-width: 3.5;
+  transition: all var(--transition-fast);
+}
+
+.node-group.type-pc .node-tile {
+  stroke: var(--accent);
+}
+
+.node-group.type-router .node-tile {
+  stroke: var(--info);
+}
+
+.node-group.type-server .node-tile {
+  stroke: var(--warning);
+}
+
+/* Icon inside node */
+.node-icon-group {
+  pointer-events: none;
+}
+
+.node-icon-group svg {
+  width: 44px;
+  height: 44px;
+  max-width: 44px;
+  max-height: 44px;
+}
+
+.node-group.type-pc .node-icon-group {
+  color: var(--accent);
+}
+
+.node-group.type-router .node-icon-group {
+  color: var(--info);
+}
+
+.node-group.type-server .node-icon-group {
+  color: var(--warning);
+}
+
+/* Disabled Node */
+.node-group.disabled {
+  opacity: 0.45;
+}
+
+.node-group.disabled .node-tile {
+  stroke-dasharray: 5 4;
+  stroke: var(--text-muted) !important;
+}
+
+/* Node Under Attack */
+.node-attack-rect {
+  stroke: var(--attack-pulse);
+  stroke-width: 3;
+  fill: none;
+  animation: pulseAttackBox 1.2s ease-in-out infinite;
+}
+
+@keyframes pulseAttackBox {
+  0% {
+    x: -47px;
+    y: -47px;
+    width: 94px;
+    height: 94px;
+    rx: 24px;
+    opacity: 1;
+  }
+  50% {
+    x: -54px;
+    y: -54px;
+    width: 108px;
+    height: 108px;
+    rx: 28px;
+    opacity: 0.5;
+  }
+  100% {
+    x: -60px;
+    y: -60px;
+    width: 120px;
+    height: 120px;
+    rx: 32px;
+    opacity: 0;
+  }
+}
+
+/* Node Labels */
+.node-label-title {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  fill: var(--midnight);
+  text-anchor: middle;
+  pointer-events: none;
+  user-select: none;
+}
+
+.node-label-ip {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 400;
+  fill: var(--text-muted);
+  text-anchor: middle;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Badges on Nodes */
+.node-badge {
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Packets (12px teal circle with white outline & trailing fade)
+   ========================================================================== */
+
+.packets-layer {
+  pointer-events: none;
+}
+
+.packet-trail-dot {
+  fill: var(--packet);
+  pointer-events: none;
+}
+
+.packet-circle {
+  fill: var(--packet);
+  stroke: #FFFFFF;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 2px 6px rgba(20, 184, 166, 0.45));
+}
+
+.packet-attack {
+  fill: var(--attack-pulse);
+  stroke: #FFFFFF;
+  stroke-width: 2;
+  filter: drop-shadow(0 2px 6px rgba(220, 38, 38, 0.5));
+}
+
+.packet-probe {
+  fill: var(--probe-color);
+  stroke: #FFFFFF;
+  stroke-width: 2;
+  filter: drop-shadow(0 2px 6px rgba(180, 83, 9, 0.45));
+}
+
+/* Packet Arrival & Failure Rings */
+.packet-arrival-ring {
+  fill: none;
+  stroke: var(--success-bright);
+  stroke-width: 4;
+  animation: arrivalPulse 800ms ease-out forwards;
+}
+
+@keyframes arrivalPulse {
+  0% {
+    r: 44px;
+    opacity: 1;
+    stroke-width: 5;
+  }
+  100% {
+    r: 90px;
+    opacity: 0;
+    stroke-width: 1.5;
+  }
+}
+
+.packet-failure-ring {
+  fill: none;
+  stroke: var(--danger);
+  stroke-width: 4;
+  animation: failureFlash 700ms ease-out forwards;
+}
+
+@keyframes failureFlash {
+  0% {
+    r: 44px;
+    opacity: 1;
+    stroke-width: 5;
+  }
+  50% {
+    opacity: 0.9;
+    stroke-width: 6;
+  }
+  100% {
+    r: 85px;
+    opacity: 0;
+    stroke-width: 1.5;
+  }
+}
+
+/* Reduced motion disables infinite flow & pulse */
+@media (prefers-reduced-motion: reduce) {
+  .link-group.active-route .link-line {
+    animation: none;
+    stroke-dasharray: none;
+  }
+  .node-attack-rect {
+    animation: none;
+    opacity: 0.8;
+  }
+}

@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NetShield Sim: Interactive Network Simulation & Security Dashboard</title>
+
+  <!-- Security: Content Security Policy -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; script-src 'self' 'unsafe-inline'; connect-src 'self' data:;">
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/canvas.css">
+</head>
+<body>
+  <!-- Cover Opening Page (Title Card with Floating Constellation) -->
+  <div id="cover-page" class="cover-page" role="dialog" aria-modal="true" aria-label="Welcome Cover Page">
+    <canvas id="constellation-canvas" class="constellation-canvas"></canvas>
+
+    <div class="cover-content">
+      <div class="cover-shield-wrap">
+        <svg class="cover-shield-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="var(--accent)"/>
+          <path d="M9 12l2 2 4-4" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <h1 class="cover-title">NetShield Sim</h1>
+      <p class="cover-subtitle">Interactive Network Simulation & Security Dashboard</p>
+
+      <div class="cover-divider"></div>
+
+      <div class="cover-actions">
+        <button id="enter-workspace-btn" class="btn btn-primary enter-workspace-btn" aria-label="Go to Workspace" onclick="dismissCoverPage()">
+          <span>Go to Workspace</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        </button>
+      </div>
+
+      <div class="cover-key-hint">Press <kbd>Enter</kbd> or <kbd>Space</kbd> to launch</div>
+    </div>
+  </div>
+
+  <!-- Inline Self-Initializing Constellation Background Animation -->
+  <script>
+    (function() {
+      const canvas = document.getElementById('constellation-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let animId = null;
+      let active = true;
+      let startTime = performance.now();
+      const NUM_POINTS = 18;
+
+      function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        if (ctx.resetTransform) {
+          ctx.resetTransform();
+        } else {
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+        }
+        ctx.scale(dpr, dpr);
+      }
+
+      window.addEventListener('resize', resize);
+      resize();
+
+      function drawConstellation(now) {
+        if (!active) return;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const te = (now - startTime) / 1000;
+        ctx.clearRect(0, 0, w, h);
+
+        const pts = [];
+        for (let i = 0; i < NUM_POINTS; i++) {
+          const bx = (0.05 + ((i * 0.6180339887) % 1) * 0.90) * w;
+          const by = (0.06 + ((i * 0.7548776662) % 1) * 0.88) * h;
+          const ox = 22 * Math.sin(te * 0.5 + i);
+          const oy = 16 * Math.cos(te * 0.4 + i * 1.3);
+          pts.push([bx + ox, by + oy]);
+        }
+
+        const maxDist = Math.min(380, Math.max(260, w * 0.28));
+        for (let i = 0; i < pts.length; i++) {
+          for (let j = i + 1; j < pts.length; j++) {
+            const p1 = pts[i];
+            const p2 = pts[j];
+            const d = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
+            if (d < maxDist) {
+              const alpha = (0.45 * (1 - d / maxDist)).toFixed(3);
+              ctx.beginPath();
+              ctx.moveTo(p1[0], p1[1]);
+              ctx.lineTo(p2[0], p2[1]);
+              ctx.strokeStyle = 'rgba(20, 184, 166, ' + alpha + ')';
+              ctx.lineWidth = 1.75;
+              ctx.stroke();
+
+              // Moving transit pulse along the connecting link
+              const progress = ((te * 0.35 + (i * 0.19 + j * 0.29)) % 1);
+              const px = p1[0] + (p2[0] - p1[0]) * progress;
+              const py = p1[1] + (p2[1] - p1[1]) * progress;
+              ctx.beginPath();
+              ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+              ctx.fillStyle = 'rgba(20, 184, 166, ' + Math.min(0.9, Number(alpha) * 2.2) + ')';
+              ctx.fill();
+            }
+          }
+        }
+
+        for (let i = 0; i < pts.length; i++) {
+          const p = pts[i];
+          ctx.beginPath();
+          ctx.arc(p[0], p[1], 6, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(20, 184, 166, 0.45)';
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(p[0], p[1], 2.75, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgb(20, 184, 166)';
+          ctx.fill();
+        }
+
+        animId = requestAnimationFrame(drawConstellation);
+      }
+
+      animId = requestAnimationFrame(drawConstellation);
+
+      window.dismissCoverPage = function() {
+        const cover = document.getElementById('cover-page');
+        if (!cover) return;
+        active = false;
+        if (animId) { cancelAnimationFrame(animId); animId = null; }
+        cover.classList.add('hidden');
+        cover.style.pointerEvents = 'none';
+        setTimeout(function() {
+          cover.style.display = 'none';
+          if (window.fitToScreen) window.fitToScreen();
+          if (window.renderCanvas) window.renderCanvas();
+        }, 300);
+      };
+
+      window.showCoverPage = function() {
+        const cover = document.getElementById('cover-page');
+        if (!cover) return;
+        active = true;
+        cover.style.display = 'flex';
+        resize();
+        startTime = performance.now();
+        requestAnimationFrame(function() {
+          cover.classList.remove('hidden');
+        });
+        if (!animId) animId = requestAnimationFrame(drawConstellation);
+      };
+
+      window.addEventListener('keydown', function(e) {
+        if (!active) return;
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+          e.preventDefault();
+          window.dismissCoverPage();
+        }
+      });
+    })();
+  </script>
+
+  <div id="app-root">
+
+    <!-- Header (60px) -->
+    <header class="app-header" role="banner">
+      <div class="header-left">
+        <a href="#" class="brand" id="brand-home-btn" aria-label="NetShield Sim Home" onclick="if(window.showCoverPage){window.showCoverPage();}return false;" data-tooltip-title="Cover Screen" data-tooltip-text="Click to view the opening title cover screen.">
+          <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+          <span>NetShield Sim</span>
+        </a>
+
+        <div class="topology-title-container">
+          <span class="topology-label">Topology</span>
+          <input type="text" id="topology-name-input" class="topology-name-input" value="Office Network" aria-label="Topology Name" maxlength="20" data-tooltip-title="Rename Network" data-tooltip-text="Click to rename this network configuration.">
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="sim-badge" role="note">
+          <svg class="sim-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>Simulation only: no real network is touched</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <button class="btn btn-secondary btn-sm" id="load-example-btn" data-tooltip-title="Load Example Network" data-tooltip-text="Loads a complete 9-device demo topology with redundant routes.">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          <span>Load Example</span>
+        </button>
+
+        <button class="btn btn-secondary btn-sm" id="save-btn" data-tooltip-title="Save Network" data-tooltip-text="Save current topology to your browser storage slots.">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          <span>Save</span>
+        </button>
+
+        <button class="btn btn-secondary btn-sm" id="load-btn" data-tooltip-title="Load Saved Network" data-tooltip-text="View and restore previously saved network configurations.">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Load</span>
+        </button>
+
+        <button class="btn btn-secondary btn-sm" id="export-btn" data-tooltip-title="Export JSON" data-tooltip-text="Download this network configuration as a JSON file.">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span>Export</span>
+        </button>
+
+        <button class="btn btn-secondary btn-sm" id="import-btn" data-tooltip-title="Import JSON" data-tooltip-text="Upload a network configuration JSON file from your computer.">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Import</span>
+        </button>
+        <input type="file" id="import-file-input" accept=".json" style="display: none;">
+
+        <div style="width: 1px; height: 20px; background: var(--border);"></div>
+
+        <button class="btn btn-icon btn-sm" id="help-btn" data-tooltip-title="Help & Tutorial" data-tooltip-text="Start the 5-minute interactive guided walkthrough." aria-label="Help and Tutorial">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </button>
+
+        <button class="btn btn-icon btn-sm drawer-toggle-btn" id="drawer-toggle-btn" aria-label="Toggle Side Drawer" data-tooltip-title="Toggle Side Panel" data-tooltip-text="Open or close the configuration panel drawer.">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Persistent Alert Banner under header -->
+    <div id="app-alert-banner" class="alert-banner" role="alert" aria-live="assertive">
+      <div class="alert-banner-content">
+        <svg class="alert-banner-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <strong id="alert-banner-text">Critical security alert: High traffic anomaly detected.</strong>
+      </div>
+      <div>
+        <button class="btn btn-danger btn-sm" onclick="document.getElementById('tab-btn-security').click()">
+          Review in Security Tab
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <main class="main-workspace" role="main">
+
+      <!-- Left Toolbar (72px) -->
+      <nav class="left-toolbar" role="toolbar" aria-label="Network Tools">
+        <button class="tool-btn active" id="tool-select" data-tooltip-title="Select & Move Tool" data-tooltip-text="Click to select devices or cables; drag to move devices around.">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 3l7 18 3-7 7-3L3 3z"/></svg>
+          <span class="tool-label">Select</span>
+        </button>
+
+        <div class="toolbar-separator"></div>
+
+        <button class="tool-btn" id="tool-add-pc" data-tooltip-title="Add Computer" data-tooltip-text="Click here, then click on the canvas to place a client computer.">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <span class="tool-label">PC</span>
+        </button>
+
+        <button class="tool-btn" id="tool-add-router" data-tooltip-title="Add Router" data-tooltip-text="Click here, then click on the canvas to place a network router.">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="13" width="20" height="8" rx="2"/><path d="M6 17h.01M10 17h.01M14 17h.01M18 17h.01"/><path d="M6 13V6a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v7"/><path d="M14 13V6a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v7"/></svg>
+          <span class="tool-label">Router</span>
+        </button>
+
+        <button class="tool-btn" id="tool-add-server" data-tooltip-title="Add Server" data-tooltip-text="Click here, then click on the canvas to place a target server.">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+          <span class="tool-label">Server</span>
+        </button>
+
+        <div class="toolbar-separator"></div>
+
+        <button class="tool-btn" id="tool-link" data-tooltip-title="Link Tool (Cable)" data-tooltip-text="Click two devices to connect them with a virtual network cable.">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <span class="tool-label">Link</span>
+        </button>
+
+        <button class="tool-btn" id="tool-delete" data-tooltip-title="Delete Tool" data-tooltip-text="Click any device or cable on the canvas to delete it.">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          <span class="tool-label">Delete</span>
+        </button>
+
+        <div class="toolbar-separator"></div>
+
+        <button class="tool-btn" id="tool-zoom-in" data-tooltip-title="Zoom In (+)" data-tooltip-text="Increase canvas zoom level.">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          <span class="tool-label">Zoom +</span>
+        </button>
+
+        <button class="tool-btn" id="tool-zoom-out" data-tooltip-title="Zoom Out (-)" data-tooltip-text="Decrease canvas zoom level.">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          <span class="tool-label">Zoom -</span>
+        </button>
+
+        <button class="tool-btn" id="tool-fit" data-tooltip-title="Fit to Screen" data-tooltip-text="Center and scale all network devices within view.">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          <span class="tool-label">Fit</span>
+        </button>
+
+        <div class="toolbar-separator"></div>
+
+        <button class="tool-btn" id="tool-undo" disabled data-tooltip-title="Undo (Ctrl+Z)" data-tooltip-text="Revert the last topology action.">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+          <span class="tool-label">Undo</span>
+        </button>
+
+        <button class="tool-btn" id="tool-redo" disabled data-tooltip-title="Redo (Ctrl+Y)" data-tooltip-text="Re-apply the undone topology action.">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+          <span class="tool-label">Redo</span>
+        </button>
+      </nav>
+
+      <!-- Center Canvas Workspace -->
+      <section class="canvas-wrapper" aria-label="Network Topology Workspace">
+        <svg id="topology-svg" class="canvas-svg" tabindex="0" role="application" aria-label="Interactive Topology Canvas">
+          <title>Network Topology Map</title>
+          <desc>Visual topology map containing computers, routers, servers, and cables.</desc>
+
+          <defs>
+            <!-- Background Grid Pattern (40px lines matching video) -->
+            <pattern id="canvas-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" class="grid-pattern-line"/>
+            </pattern>
+          </defs>
+
+          <!-- Grid Background Rect -->
+          <rect width="100%" height="100%" fill="url(#canvas-grid)" style="pointer-events: none;"/>
+
+          <!-- World Group for Pan & Zoom -->
+          <g id="canvas-world">
+            <g id="links-layer" class="links-layer"></g>
+            <line id="temp-link-line" class="temp-link-line" style="display: none;"></line>
+            <g id="nodes-layer" class="nodes-layer"></g>
+            <g id="packets-layer" class="packets-layer"></g>
+            <g id="effects-layer" class="effects-layer"></g>
+          </g>
+        </svg>
+
+        <!-- Canvas Floating Hint -->
+        <div class="canvas-hint" id="canvas-hint">
+          <span id="canvas-hint-text"><strong>Select Tool:</strong> Click to select devices or cables; drag to move.</span>
+        </div>
+
+        <!-- Canvas Empty State -->
+        <div class="empty-state hidden" id="canvas-empty-state">
+          <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <h3>Your canvas is empty</h3>
+          <p>Drag a Computer, Router or Server from the left toolbar, or load our pre-built example network.</p>
+          <button class="btn btn-primary" onclick="window.loadExampleNetworkDirect()">
+            Load Example Network
+          </button>
+        </div>
+      </section>
+
+      <!-- Right Panel (340px) -->
+      <aside class="right-panel" id="right-panel" role="complementary" aria-label="Network Controls & Inspector">
+        <!-- Panel Tabs -->
+        <div class="panel-header">
+          <ul class="panel-tabs" role="tablist">
+            <li>
+              <button class="tab-btn active" id="tab-btn-inspector" role="tab" aria-selected="true" aria-controls="tab-content-inspector">
+                <span>Inspector</span>
+              </button>
+            </li>
+            <li>
+              <button class="tab-btn" id="tab-btn-routing" role="tab" aria-selected="false" aria-controls="tab-content-routing">
+                <span>Routing</span>
+              </button>
+            </li>
+            <li>
+              <button class="tab-btn" id="tab-btn-security" role="tab" aria-selected="false" aria-controls="tab-content-security">
+                <span>Security</span>
+                <span class="tab-badge-dot hidden" id="security-tab-dot"></span>
+              </button>
+            </li>
+            <li>
+              <button class="tab-btn" id="tab-btn-logs" role="tab" aria-selected="false" aria-controls="tab-content-logs">
+                <span>Event Log</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Panel Body -->
+        <div class="panel-body">
+
+          <!-- Tab 1: Inspector -->
+          <div class="tab-content active" id="tab-content-inspector" role="tabpanel" aria-labelledby="tab-btn-inspector">
+            <!-- Dynamically populated by updateInspectorPanel -->
+          </div>
+
+          <!-- Tab 2: Routing -->
+          <div class="tab-content" id="tab-content-routing" role="tabpanel" aria-labelledby="tab-btn-routing">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  Packet Dispatch
+                </span>
+                <span class="chip chip-info">Dijkstra Engine</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="routing-src-select">Source Device</label>
+                <select id="routing-src-select" class="form-control"></select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="routing-dst-select">Destination Device</label>
+                <select id="routing-dst-select" class="form-control"></select>
+              </div>
+
+              <div class="form-group">
+                <div class="form-label">
+                  <span>Simulation Speed</span>
+                  <span id="speed-label" style="font-weight: normal; color: var(--text-muted);">Normal</span>
+                </div>
+                <input type="range" id="routing-speed-slider" min="1" max="3" value="2" step="1" aria-label="Simulation Speed Slider">
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                  <span>Slow</span>
+                  <span>Normal</span>
+                  <span>Fast</span>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top: 8px;">
+                <label class="switch-label">
+                  <span class="switch">
+                    <input type="checkbox" id="routing-compare-check">
+                    <span class="switch-slider"></span>
+                  </span>
+                  <span>Compare Routes (show previous path)</span>
+                </label>
+              </div>
+
+              <div style="margin-top: 14px;">
+                <button class="btn btn-primary btn-full" id="routing-send-btn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  Send Packet
+                </button>
+              </div>
+            </div>
+
+            <!-- Path Calculation Result Card -->
+            <div class="card" id="routing-result-card" style="display: none;">
+              <div class="card-header">
+                <span class="card-title">Shortest Path Found</span>
+                <span class="chip chip-success">Optimal</span>
+              </div>
+
+              <div class="route-path-box">
+                <div class="route-hops-list" id="route-hops-container">
+                  <!-- e.g. PC-1 -> R1 -> R2 -> Server-1 -->
+                </div>
+                <div style="display: flex; gap: 16px; margin-top: 4px;">
+                  <span class="route-stat-badge">Hops: <strong id="route-stat-hops">0</strong></span>
+                  <span class="route-stat-badge">Total Cost: <strong id="route-stat-cost">0</strong></span>
+                </div>
+              </div>
+
+              <p id="route-explanation-text" style="font-size: var(--fs-xs); color: var(--text-secondary); margin-top: 8px; line-height: 1.4;"></p>
+
+              <!-- Collapsible Dijkstra step details -->
+              <div style="margin-top: 10px; border-top: 1px solid var(--border); padding-top: 8px;">
+                <button class="collapsible-trigger" id="route-steps-toggle">
+                  <strong>Why this path? (Dijkstra step-by-step)</strong>
+                  <span>Show Details</span>
+                </button>
+                <div class="collapsible-content" id="route-steps-details">
+                  <table class="step-table">
+                    <thead>
+                      <tr>
+                        <th>Node</th>
+                        <th>Min Cost</th>
+                        <th>Predecessor</th>
+                      </tr>
+                    </thead>
+                    <tbody id="route-step-tbody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 3: Security -->
+          <div class="tab-content" id="tab-content-security" role="tabpanel" aria-labelledby="tab-btn-security">
+            
+            <!-- Simulation Honest Disclaimer -->
+            <div style="padding: 8px 12px; background: rgba(59, 130, 246, 0.1); border: 1px solid var(--border); border-radius: var(--r-sm); font-size: 11px; color: var(--info); display: flex; align-items: center; gap: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <span>Simulation only. No real network or device is attacked.</span>
+            </div>
+
+            <!-- Attack Simulator Card -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6m0 0l-3-3m3 3l3-3"/><path d="M17 10l4 4m0 0l-4 4m4-4H3"/><path d="M12 22v-6m0 0l3 3m-3-3l-3 3"/></svg>
+                  Attack Generator
+                </span>
+                <span class="chip chip-danger">Simulator</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="sec-attacker-select">Attacker Device</label>
+                <select id="sec-attacker-select" class="form-control"></select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="sec-target-select">Target Server</label>
+                <select id="sec-target-select" class="form-control"></select>
+              </div>
+
+              <div class="form-group">
+                <span class="form-label">Attack Type</span>
+                <div style="display: flex; gap: 16px; margin-top: 4px;">
+                  <label style="display: flex; align-items: center; gap: 6px; font-size: var(--fs-xs); cursor: pointer;">
+                    <input type="radio" name="sec-attack-type" value="flood" checked>
+                    <span>Flood (DoS)</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 6px; font-size: var(--fs-xs); cursor: pointer;">
+                    <input type="radio" name="sec-attack-type" value="scan">
+                    <span>Port Scan</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="sec-intensity-slider">Attack Intensity</label>
+                <input type="range" id="sec-intensity-slider" min="1" max="3" value="2" step="1">
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                  <span>Low</span>
+                  <span>Medium</span>
+                  <span>High</span>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top: 8px;">
+                <label class="switch-label">
+                  <span class="switch">
+                    <input type="checkbox" id="sec-auto-defense-switch" checked>
+                    <span class="switch-slider"></span>
+                  </span>
+                  <span>Automated Firewall Defense</span>
+                </label>
+              </div>
+
+              <div style="display: flex; gap: 8px; margin-top: 14px;">
+                <button class="btn btn-danger btn-full" id="sec-start-attack-btn">
+                  Start Attack
+                </button>
+                <button class="btn btn-secondary btn-full" id="sec-stop-attack-btn" disabled>
+                  Stop
+                </button>
+              </div>
+
+              <div style="margin-top: 8px;">
+                <button class="btn btn-secondary btn-full btn-sm" id="sec-block-now-btn">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  Manual Block Now
+                </button>
+              </div>
+            </div>
+
+            <!-- Live Traffic Meter Box -->
+            <div class="traffic-meter-box">
+              <div class="meter-stats">
+                <span class="form-label" style="margin: 0;">Live Target Traffic</span>
+                <span class="meter-value" id="sec-meter-rps">0 req/s</span>
+              </div>
+              <div class="meter-bar-container">
+                <div class="meter-bar-fill" id="sec-meter-fill"></div>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                <span class="meter-threshold">Safe Threshold: 100 req/s</span>
+                <span class="meter-threshold">Max: 280 req/s</span>
+              </div>
+            </div>
+
+            <!-- Port Scan Live Stats Box -->
+            <div class="card" id="sec-scan-stats" style="display: none; padding: 10px 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: var(--fs-xs); color: var(--text-secondary);">Probed Ports:</span>
+                <strong id="sec-scanned-count" style="font-family: var(--font-mono); color: var(--warning);">0</strong>
+              </div>
+              <span class="form-help">Alert triggers when > 15 ports are probed.</span>
+            </div>
+
+            <!-- Active Alerts Section -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Security Alerts</span>
+              </div>
+              <div id="sec-alerts-list" style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+
+            <!-- Active Firewall Rules Section -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Active Firewall Rules</span>
+              </div>
+              <div id="sec-rules-list" class="rules-list">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Tab 4: Event Log -->
+          <div class="tab-content" id="tab-content-logs" role="tabpanel" aria-labelledby="tab-btn-logs">
+            <div class="card" style="padding: 10px 14px;">
+              <div class="card-header" style="margin-bottom: 8px;">
+                <span class="card-title">System Event Log</span>
+                <button class="btn btn-secondary btn-sm" id="logs-clear-btn">Clear</button>
+              </div>
+
+              <!-- Filter Chips -->
+              <div class="log-filters">
+                <button class="filter-chip active" data-filter="all">All</button>
+                <button class="filter-chip" data-filter="packets">Packets</button>
+                <button class="filter-chip" data-filter="network">Network</button>
+                <button class="filter-chip" data-filter="security">Security</button>
+              </div>
+
+              <div id="logs-list-container" class="log-list" style="max-height: 480px; overflow-y: auto;">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </aside>
+
+    </main>
+
+    <!-- Status Bar (36px) -->
+    <footer class="app-statusbar" role="status">
+      <div class="statusbar-left">
+        <div class="health-status healthy" id="statusbar-health">
+          <span class="health-dot"></span>
+          <span class="health-text">Network healthy</span>
+        </div>
+        <div style="width: 1px; height: 16px; background: var(--border);"></div>
+        <div><strong id="statusbar-nodes-count">0</strong> devices · <strong id="statusbar-links-count">0</strong> cables (<span id="statusbar-online-count">0</span> online)</div>
+        <div style="width: 1px; height: 16px; background: var(--border);"></div>
+        <div>Packets delivered: <strong id="statusbar-delivered-count">0</strong></div>
+      </div>
+      <div class="statusbar-right">
+        <span id="statusbar-autosave">Autosave on · last saved --:--</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Context Menu (Fixed) -->
+  <div id="context-menu" role="menu" aria-label="Context Actions"></div>
+
+  <!-- Tooltip Element (Fixed) -->
+  <div id="app-tooltip" role="tooltip" aria-hidden="true"></div>
+
+  <!-- Toast Container (Fixed) -->
+  <div id="toast-container" aria-live="polite"></div>
+
+  <!-- Welcome / Tutorial Modal -->
+  <div class="modal-backdrop" id="welcome-modal" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title" id="welcome-title">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" color="var(--accent)"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+          <span>Welcome to NetShield Sim</span>
+        </div>
+        <button class="btn btn-icon-sm modal-close-trigger" aria-label="Close modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 12px; font-size: var(--fs-base); color: var(--text-primary); font-weight: 500;">
+          An interactive laboratory for learning Computer Networks and Cyber Defense.
+        </p>
+        <p style="margin-bottom: 12px;">
+          Build topologies with computers, routers, and servers. Send packets computed by <strong>Dijkstra's shortest-path algorithm</strong>, test fault tolerance by cutting cables, and simulate attacks with automated firewall responses.
+        </p>
+        <div style="background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--r-md); padding: 12px; font-size: var(--fs-xs);">
+          <strong style="color: var(--accent);">Safe Sandbox:</strong> Everything runs locally inside your web browser. No real networks or servers are ever touched.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="welcome-skip-btn">Explore On My Own</button>
+        <button class="btn btn-primary" id="welcome-tour-btn">Take 5-Minute Tour</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Save Topology Modal -->
+  <div class="modal-backdrop" id="save-modal" role="dialog" aria-modal="true" aria-labelledby="save-modal-title">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title" id="save-modal-title">Save Network Topology</div>
+        <button class="btn btn-icon-sm modal-close-trigger" aria-label="Close modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="save-slot-name">Topology Name</label>
+          <input type="text" id="save-slot-name" class="form-control" maxlength="30" value="My Topology">
+          <span class="form-help">Enter a name to save this configuration to browser storage.</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-close-trigger">Cancel</button>
+        <button class="btn btn-primary" id="save-modal-confirm">Save to Browser</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load Topology Modal -->
+  <div class="modal-backdrop" id="load-modal" role="dialog" aria-modal="true" aria-labelledby="load-modal-title">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title" id="load-modal-title">Saved Network Configurations</div>
+        <button class="btn btn-icon-sm modal-close-trigger" aria-label="Close modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="load-slots-list">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-close-trigger">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen Size Warning for < 1024px screens -->
+  <div class="screen-size-warning">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" color="var(--accent)"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    <h2 style="margin: 16px 0 8px;">Screen Too Small</h2>
+    <p style="color: var(--text-secondary); max-width: 400px; margin-bottom: 20px;">
+      NetShield Sim works best on a tablet or desktop screen (1024px or wider). Please open this application on a larger screen to explore network topologies.
+    </p>
+    <button class="btn btn-secondary" onclick="document.querySelector('.screen-size-warning').style.display='none'">
+      Continue Anyway
+    </button>
+  </div>
+
+  <!-- NetShield Sim Application Bundle (Supports file:// and http://) -->
+  <script src="js/bundle.js"></script>
+</body>
+</html>

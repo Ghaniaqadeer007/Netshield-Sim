@@ -1,0 +1,188 @@
+{
+  "name": "Office Network",
+  "version": "1.0",
+  "createdAt": "2026-10-24T12:00:00Z",
+  "nodes": [
+    {
+      "id": "node-pc-1",
+      "label": "PC-1",
+      "type": "pc",
+      "ip": "192.168.1.11",
+      "x": 240,
+      "y": 300,
+      "status": "online",
+      "blocked": false
+    },
+    {
+      "id": "node-pc-2",
+      "label": "PC-2",
+      "type": "pc",
+      "ip": "192.168.1.12",
+      "x": 240,
+      "y": 560,
+      "status": "online",
+      "blocked": false
+    },
+    {
+      "id": "node-pc-3",
+      "label": "PC-3",
+      "type": "pc",
+      "ip": "192.168.1.13",
+      "x": 240,
+      "y": 810,
+      "status": "online",
+      "blocked": false
+    },
+    {
+      "id": "node-r-1",
+      "label": "R1",
+      "type": "router",
+      "ip": "192.168.1.1",
+      "x": 600,
+      "y": 440,
+      "status": "online",
+      "blocked": false
+    },
+    {
+      "id": "node-r-2",
+      "label": "R2",
+      "type": "router",
+      "ip": "192.168.1.2",
+      "x": 860,
+      "y": 270,
+      "status": "online",
+      "blocked": false
+    },
+    {
+      "id": "node-r-3",
+      "label": "R3",
+      "type": "router",
+      "ip": "192.168.1.3",
+      "x": 860,
+      "y": 720,
+      "status": "online",
+      "blocked": false
+    },
+    {
+      "id": "node-r-4",
+      "label": "R4",
+      "type": "router",
+      "ip": "192.168.1.4",
+      "x": 1120,
+      "y": 500,
+      "status": "online",
+      "blocked": false
+    },
+    {
+      "id": "node-srv-1",
+      "label": "Server-1",
+      "type": "server",
+      "ip": "192.168.1.101",
+      "x": 1330,
+      "y": 290,
+      "status": "online",
+      "blocked": false
+    },
+    {
+      "id": "node-srv-2",
+      "label": "Server-2",
+      "type": "server",
+      "ip": "192.168.1.102",
+      "x": 1330,
+      "y": 740,
+      "status": "online",
+      "blocked": false
+    }
+  ],
+  "links": [
+    {
+      "id": "link-pc1-r1",
+      "source": "node-pc-1",
+      "target": "node-r-1",
+      "cost": 2,
+      "bandwidth": 100,
+      "status": "up"
+    },
+    {
+      "id": "link-pc2-r1",
+      "source": "node-pc-2",
+      "target": "node-r-1",
+      "cost": 1,
+      "bandwidth": 100,
+      "status": "up"
+    },
+    {
+      "id": "link-pc3-r3",
+      "source": "node-pc-3",
+      "target": "node-r-3",
+      "cost": 2,
+      "bandwidth": 100,
+      "status": "up"
+    },
+    {
+      "id": "link-r1-r2",
+      "source": "node-r-1",
+      "target": "node-r-2",
+      "cost": 3,
+      "bandwidth": 100,
+      "status": "up"
+    },
+    {
+      "id": "link-r1-r3",
+      "source": "node-r-1",
+      "target": "node-r-3",
+      "cost": 4,
+      "bandwidth": 100,
+      "status": "up"
+    },
+    {
+      "id": "link-r2-r4",
+      "source": "node-r-2",
+      "target": "node-r-4",
+      "cost": 2,
+      "bandwidth": 100,
+      "status": "up"
+    },
+    {
+      "id": "link-r3-r4",
+      "source": "node-r-3",
+      "target": "node-r-4",
+      "cost": 3,
+      "bandwidth": 100,
+      "status": "up"
+    },
+    {
+      "id": "link-r2-srv1",
+      "source": "node-r-2",
+      "target": "node-srv-1",
+      "cost": 2,
+      "bandwidth": 100,
+      "status": "up"
+    },
+    {
+      "id": "link-r4-srv1",
+      "source": "node-r-4",
+      "target": "node-srv-1",
+      "cost": 1,
+      "bandwidth": 100,
+      "status": "up"
+    },
+    {
+      "id": "link-r4-srv2",
+      "source": "node-r-4",
+      "target": "node-srv-2",
+      "cost": 2,
+      "bandwidth": 100,
+      "status": "up"
+    },
+    {
+      "id": "link-r3-srv2",
+      "source": "node-r-3",
+      "target": "node-srv-2",
+      "cost": 4,
+      "bandwidth": 100,
+      "status": "up"
+    }
+  ],
+  "firewallRules": []
+}

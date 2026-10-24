@@ -1,0 +1,90 @@
+/* ==========================================================================
+   NetShield Sim - Design Tokens
+   Theme: "Midnight Teal on White" (DESIGN.md §2.1)
+   ========================================================================== */
+
+:root {
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+
+  --fs-xs: 12px;
+  --lh-xs: 16px;
+  --fs-sm: 13px;
+  --lh-sm: 18px;
+  --fs-base: 14px;
+  --lh-base: 20px;
+  --fs-md: 16px;
+  --lh-md: 24px;
+  --fs-lg: 20px;
+  --lh-lg: 28px;
+  --fs-xl: 28px;
+  --lh-xl: 36px;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  /* Border Radii */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-full: 9999px;
+
+  /* Dimensions */
+  --header-height: 60px;
+  --toolbar-width: 72px;
+  --panel-width: 340px;
+  --statusbar-height: 36px;
+
+  /* Surfaces: all white */
+  --bg-app:        #FFFFFF;
+  --bg-panel:      #FFFFFF;
+  --bg-canvas:     #FFFFFF;
+  --bg-subtle:     #F3F9F9;
+  --bg-elevated:   #FFFFFF;
+  --border:        #D5E3E5;
+  --grid-line:     #EAF2F3;
+
+  /* Midnight text */
+  --midnight:      #08121A;
+  --text-primary:  #08121A;
+  --text-secondary:#3F5663;
+  --text-muted:    #5F7480;
+
+  /* Teal accent */
+  --accent:        #0F766E;
+  --accent-hover:  #0B5F58;
+  --accent-bright: #14B8A6;
+  --accent-soft:   rgba(20, 184, 166, 0.14);
+
+  /* Status colors */
+  --success:       #15803D;
+  --success-bright:#22C55E;
+  --warning:       #B45309;
+  --danger:        #DC2626;
+  --info:          #0E7490;
+
+  --packet:        #14B8A6;
+  --path-highlight:#14B8A6;
+  --attack-pulse:  #DC2626;
+  --probe-color:   #B45309;
+  --cable:         #9DB4BA;
+
+  /* Shadows: subtle on white surface */
+  --shadow-sm:     0 2px 8px rgba(8, 18, 26, 0.06);
+  --shadow-md:     0 4px 16px rgba(8, 18, 26, 0.10);
+  --shadow-lg:     0 12px 36px rgba(8, 18, 26, 0.14);
+
+  --overlay-bg:    rgba(8, 18, 26, 0.45);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+}
